@@ -1,83 +1,165 @@
-//Node.js has a built-in module called HTTP, which allows Node.js to transfer data over the Hyper Text Transfer Protocol (HTTP).
-const http = require('http'); //includes a module
-var parser = require('./parser.js'); //includes a user defined module
-var url = require('url');
+const http = require('http'); 
+var parser = require('./parser.js');
+var User = require('./user.js')
 
 const hostname = '127.0.0.1';
 const port = 8000;
 
-var users = [];
+var usersList = [];
 
-class User {
-    constructor(userID,userName,userEmail,userScore){
-        this.userID = userID;
-        this.userName = userName;
-        this.userEmail = userEmail;
-        this.userScore = userScore;
-    }
+var datas = {
+    NAME: 1,
+    EMAIL: 3,
+    SCORE: 5,
 }
 
-const server = http.createServer((req, res) => { //req is the url written by the client
-    /*  
-    this line or the next two line can be used to indicate status code
-    res.writeHead(200, {'Content-Type': 'text/html'}); 
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    */
-    var state = parser.parseTheUrl(req.url);
-    if(state == -1){ 
-        //errorneous url 
-        console.log("fail");
-        res.statusCode = 404;
-        res.write("The field does not exist.");
-        res.end();  //ends the response
-    }
-    /*
-    state 1 : POST with username, hence create new name, code 201
-    state 2 :
-    */
-    if(state[0] == 1 && req.method == 'POST')
-    {
-        var tempName = users.length;
-        var newUser = new User(tempName,tempName,0,0);
-        users.push(newUser);
-        res.statusCode = 201;
-        res.write("New user created with ID,name,email,score: " + String(tempName) + "," + String(tempName) + ", 0, 0\n");
-        res.end();  //ends the response
-    }
-    else if(state[0] == 2){
-        var flag = false;
-        switch(req.method){
-            case 'GET':
-                for(i=0;i<users.length;i++){ //iterate over the user list
-                    if(users[i].userName == state[1]){ //if the user is created before
-                        res.statusCode = 200;
-                        res.setHeader('Content-Type', 'application/json');
-                        res.end(JSON.stringify({ 
-                            names: users[i].userName,
-                            emails : users[i].userEmail,
-                            scores : users[i].userScore,
-                        }));
-                        flag = true;
-                        break;
-                    }
-                }
-                if(flag)
-                    break;
-                res.statusCode = 404;
-                res.write("User does not exist.\n");
-                res.end();
-                break;
-            case 'PUT':
-
-            case 'DELETE':
-
-            default:
-                break;
+isIn = function(name){
+    for(i=0;i<usersList.length;i++){
+        if(usersList[i].getUserName() == name){
+            return i;
         }
     }
-    //res.end();  //ends the response
-	
+    return -1;
+}
+
+const server = http.createServer((req, res) => {
+    var parsed_input = parser.parseTheUrl(req.url);
+    if(parsed_input == -1){ //errorneous url
+        console.log("Fail");
+        res.statusCode = 404;
+        res.write("The field does not exist. Error no:404");
+        res.end();  //ends the response
+    }
+    if(req.method == 'POST')
+    {
+        switch(parsed_input.length)
+        {
+            case 1: //if client post to names resources create a new instance
+                //console.log(req.body);
+                var tempName = usersList.length+1;
+                var newUser = new User(tempName,[],0);
+                usersList.push(newUser);
+                res.statusCode = 201;
+                res.write("New user created with name: " + String(tempName) + "\n");
+                res.end();  //ends the response
+                break;//if client post to emails resources create a new instance of related name
+            case 3:
+                var name = parsed_input[datas.NAME];  //get the name from the url
+                var newEmail;
+                var flag = isIn(name);
+                //console.log(i);
+                if(flag != -1) //if the user exists
+                {
+                    newEmail = usersList[flag].createNewEmail(name);
+                    res.statusCode = 201;
+                    res.write("New email, " + newEmail + " , created for user :" + name + "\n" );
+                    res.end();  //ends the response
+
+                }
+                else{
+                    res.statusCode = 404;
+                    res.write("Name does not exist in resources.Error no:404 \n");
+                    res.end();  //ends the response
+                }
+                break;
+            case 5:
+                var name = parsed_input[datas.NAME];  //get the name from the url
+                var newScore;
+                var flag = isIn(name);
+                //console.log(i);
+                if(flag != -1) //if the user exists
+                {
+                    newScore = usersList[flag].createNewScore(name);
+                    res.statusCode = 201;
+                    res.write("New score, " + newScore + " , incremented for user :" + name + "\n" );
+                    res.end();  //ends the response
+
+                }
+                else{
+                    res.statusCode = 404;
+                    res.write("Name does not exist in resources.Error no:404 \n");
+                    res.end();  //ends the response
+                }
+            default:
+                res.write("Erroneous url for post action. \n");
+                res.end();  //ends the response
+                break;
+        }
+
+        
+    }
+    else if(req.method == 'GET'){
+        var name = parsed_input[datas.NAME];
+        var flag = isIn(name);
+        switch(parsed_input.length){
+            case 1:
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                var userNames = [];
+                for(i=0;i<usersList.length;i++){
+                    userNames.push(usersList[i].getUserName());
+                }
+                res.end(JSON.stringify({ 
+                    names: userNames
+                }));
+            case 2:
+                if(flag != -1) //if the user exists
+                {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify({ 
+                        names: usersList[flag].userName,
+                        emails : usersList[flag].userEmail,
+                        scores : usersList[flag].userScore,
+                    }));
+
+                }
+                else{
+                    res.statusCode = 404;
+                    res.write("Name does not exist in resources.Error no:404 \n");
+                    res.end();  //ends the response
+                }
+                break;
+            case 3:
+                if(flag != -1) //if the user exists
+                {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.write("Email(s) for the user is/are: \n");
+                    res.end(JSON.stringify({ 
+                        emails : usersList[flag].userEmail,
+                    }));
+
+                }
+                else{
+                    res.statusCode = 404;
+                    res.write("Name does not exist in resources.Error no:404 \n");
+                    res.end();  //ends the response
+                }
+                break;
+            case 6:
+                if(flag != -1) //if the user exists
+                {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.write("Score for the user is/are: \n");
+                    res.end(JSON.stringify({ 
+                        scores : usersList[flag].userScore,
+                    }));
+
+                }
+                else{
+                    res.statusCode = 404;
+                    res.write("Name does not exist in resources.Error no:404 \n");
+                    res.end();  //ends the response
+                }
+                break;
+            default:
+                res.write("Erroneous url for get action. \n");
+                res.end();  //ends the response
+                break;
+        }
+    }	
 });
 
 server.listen(port, hostname, () => {
