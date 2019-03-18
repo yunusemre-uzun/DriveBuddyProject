@@ -9,13 +9,19 @@ class User {
         return this.userName;
     };
 
-    createNewEmail(){
-        this.userEmail.push(this.userEmail.length+1);
+    addNewEmail(newEmail){
+        var i ;
+        for(i=0;i<this.userEmail.length;i++){
+            if(newEmail == userEmail[i]){
+                return -1;
+            }
+        }
+        userEmail.push(newEmail);
         return this.userEmail.length;
     };
 
-    createNewScore(){
-        this.userScore += 1;
+    changeScore(newScore){
+        this.userScore = newScore;
         return this.userScore;
     };
 };

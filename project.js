@@ -32,61 +32,100 @@ const server = http.createServer((req, res) => {
     }
     if(req.method == 'POST')
     {
-        switch(parsed_input.length)
-        {
-            case 1: //if client post to names resources create a new instance
-                //console.log(req.body);
-                var tempName = usersList.length+1;
-                var newUser = new User(tempName,[],0);
-                usersList.push(newUser);
-                res.statusCode = 201;
-                res.write("New user created with name: " + String(tempName) + "\n");
-                res.end();  //ends the response
-                break;//if client post to emails resources create a new instance of related name
-            case 3:
-                var name = parsed_input[datas.NAME];  //get the name from the url
-                var newEmail;
-                var flag = isIn(name);
-                //console.log(i);
-                if(flag != -1) //if the user exists
-                {
-                    newEmail = usersList[flag].createNewEmail(name);
+        var post_data = '';
+        req.on('data', function (data) {
+            post_data += data;
+        });
+        req.on('end', function () {
+            switch(parsed_input.length)
+            {
+                case 1: //if client post to names resources create a new instance
+                    //console.log(req.body);
+                    var tempName;
+                    if(post_data == ''){
+                        tempName = usersList.length+1;
+                    }
+                    else{
+                        tempName = post_data.substr(0,post_data.indexOf('\n'));
+                        console.log(tempName);
+                        for(i=0;i<usersList.length;i++){
+                            if(usersList[i] == tempName){
+                                res.statusCode = 409;
+                                res.write("Name already exists.Error no:409 \n");
+                                res.end();  //ends the response
+                            }
+                        }
+                    }
+                    var newUser = new User(tempName,[],0);
+                    usersList.push(newUser);
                     res.statusCode = 201;
-                    res.write("New email, " + newEmail + " , created for user :" + name + "\n" );
+                    res.write("New user created with name: " + String(tempName) + "\n");
                     res.end();  //ends the response
-
-                }
-                else{
-                    res.statusCode = 404;
-                    res.write("Name does not exist in resources.Error no:404 \n");
+                    break;//if client post to emails resources create a new instance of related name
+                case 3:
+                    var name = parsed_input[datas.NAME];  //get the name from the url
+                    var newEmail;
+                    var flag = isIn(name);
+                    var user = usersList[flag];
+                    //console.log(i);
+                    if(flag != -1) //if the user exists
+                    {
+                        if(post_data == ''){
+                            tempEmail = usersList.length+1;
+                            user.addNewEmail(tempEmail);
+                        }
+                        else{
+                            tempEmail = post_data.substr(0,post_data.indexOf('\n'));
+                            console.log(tempEmail);
+                            var j = user.addNewEmail(tempEmail);
+                            if(j == -1){
+                                res.statusCode = 409;
+                                res.write("Email already exists.Error no:409 \n");
+                                res.end();  //ends the response
+                            }
+                        }
+                        res.statusCode = 201;
+                        res.write("New email, " + newEmail + " , created for user :" + name + "\n" );
+                        res.end();  //ends the response
+    
+                    }
+                    else{
+                        res.statusCode = 404;
+                        res.write("Name does not exist in resources.Error no:404 \n");
+                        res.end();  //ends the response
+                    }
+                    break;
+                case 5:
+                    var name = parsed_input[datas.NAME];  //get the name from the url
+                    var newScore;
+                    var flag = isIn(name);
+                    //console.log(i);
+                    if(flag != -1) //if the user exists
+                    {
+                        if(post_data == ''){
+                            newScore = usersList.length+1;
+                        }
+                        else{
+                            newScore = post_data.substr(0,post_data.indexOf('\n'));
+                            //console.log(tempEmail);
+                        }
+                        user.changeScore(newScore);
+                        res.statusCode = 201;
+                        res.write("New score, " + newScore + " , is for user :" + name + "\n" );
+                        res.end();  //ends the response
+    
+                    }
+                    else{
+                        res.statusCode = 404;
+                        res.write("Name does not exist in resources.Error no:404 \n");
+                        res.end();  //ends the response
+                    }
+                default:
+                    res.write("Erroneous url for post action. \n");
                     res.end();  //ends the response
-                }
-                break;
-            case 5:
-                var name = parsed_input[datas.NAME];  //get the name from the url
-                var newScore;
-                var flag = isIn(name);
-                //console.log(i);
-                if(flag != -1) //if the user exists
-                {
-                    newScore = usersList[flag].createNewScore(name);
-                    res.statusCode = 201;
-                    res.write("New score, " + newScore + " , incremented for user :" + name + "\n" );
-                    res.end();  //ends the response
-
-                }
-                else{
-                    res.statusCode = 404;
-                    res.write("Name does not exist in resources.Error no:404 \n");
-                    res.end();  //ends the response
-                }
-            default:
-                res.write("Erroneous url for post action. \n");
-                res.end();  //ends the response
-                break;
-        }
-
-        
+                    break;
+            }
+        });
     }
     else if(req.method == 'GET'){
         var name = parsed_input[datas.NAME];
@@ -142,7 +181,7 @@ const server = http.createServer((req, res) => {
                 {
                     res.statusCode = 200;
                     res.setHeader('Content-Type', 'application/json');
-                    res.write("Score for the user is/are: \n");
+                    res.write("Score for the user is: \n");
                     res.end(JSON.stringify({ 
                         scores : usersList[flag].userScore,
                     }));
