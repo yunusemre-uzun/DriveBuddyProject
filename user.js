@@ -9,6 +9,39 @@ class User {
         return this.userName;
     };
 
+    changeUserName(newName){
+        this.userName = newName;
+        return 1;
+    }
+
+    deleteEmail(email){
+        var newEmailList = [];
+        var flag = false;
+        for(i=0;i<this.userEmail.length;i++){
+            if(this.userEmail[i]==email){
+                flag = true;
+                continue;
+            }
+            else{
+                newEmailList.push(this.userEmail[i]);
+            
+            }
+        }
+        this.userEmail = newEmailList;
+        return flag;
+    }
+
+    updateEmail(oldEmail,newEmail){
+        var i;
+        for(i=0;i<this.userEmail.length;i++){
+            if(oldEmail == this.userEmail[i]){
+                this.userEmail[i] = newEmail;
+                return true;
+            }
+        }
+        return false;
+    }
+
     addNewEmail(newEmail){
         var i ;
         for(i=0;i<this.userEmail.length;i++){
@@ -20,7 +53,7 @@ class User {
         return this.userEmail.length;
     };
 
-    changeScore(newScore){
+    updateScore(newScore){
         this.userScore = newScore;
         return this.userScore;
     };

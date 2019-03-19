@@ -47,7 +47,7 @@ const server = http.createServer((req, res) => {
                     }
                     else{
                         tempName = post_data.substr(0,post_data.indexOf('\n'));
-                        console.log(tempName);
+                        //console.log(tempName);
                         for(i=0;i<usersList.length;i++){
                             if(usersList[i] == tempName){
                                 res.statusCode = 409;
@@ -198,7 +198,133 @@ const server = http.createServer((req, res) => {
                 res.end();  //ends the response
                 break;
         }
+    }
+    else if(req.method == 'DELETE'){
+        var name = parsed_input[datas.NAME];
+        var flag = isIn(name);
+        if(flag =! -1){
+            switch(parsed_input.length){
+                case 2:
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/html');
+                    var newUserList = [];
+                    for(i=0;i<usersList.length;i++){
+                        if(i==flag){
+                            continue;
+                        }
+                        else{
+                            newUserList.push(usersList[i]);
+                        }
+                    }
+                    usersList = newUserList;
+                    res.write(name + " is deleted successfully. \n");
+                    res.end();  //ends the response
+                case 4:
+                    var email = parsed_input[datas.EMAIL];
+                    if(usersList[flag].deleteEmail(email)){
+                        res.statusCode = 200
+                        res.write(email + " is deleted successfully for user name:" + name + ". \n");
+                        res.end();  //ends the response
+                    }
+                    else{
+                        res.statusCode = 404
+                        res.write(email + " can not be found for user name :" + name + ". \n");
+                        res.end();  //ends the response
+                    }
+            }
+        }
+        else{
+            res.statusCode = 404
+            res.write("User with username :" + name + " can not be found. \n");
+            res.end();  //ends the response
+        }
+        
+    }
+    else if(req.method == 'PUT'){
+        var put_data = '';
+        req.on('data', function (data) {
+            put_data += data;
+        });
+        req.on('end', function () {
+            switch(parsed_input.length)
+            {
+                case 2: //if user tries to change name
+                    //console.log(req.body);
+                    var name = parsed_input[datas.NAME];
+                    var flag = isIn(name);
+                    var newName;
+                    if(flag != -1){
+                        newName = put_data.substr(0,put_data.indexOf('\n'));
+                        //console.log(tempName);
+                        for(i=0;i<usersList.length;i++){
+                            if(usersList[i] == newName){
+                                res.statusCode = 409;
+                                res.write("Name already exists.Error no:409 \n");
+                                res.end();  //ends the response
+                            }
+                        }
+                        usersList[i].changeUserName(newName);
+                        res.statusCode = 200;
+                        res.write("Name changed. \n");
+                        res.end();  //ends the response
+                    }
+                    else{
+                        res.statusCode = 404
+                        res.write("User can not be found for user name :" + name + ". \n");
+                        res.end();  //ends the response
+                    }
+                case 4: //if user tries to change email
+                    //console.log(req.body);
+                    var name = parsed_input[datas.NAME];
+                    var email = parsed_input[datas.NAME]
+                    var flag = isIn(name);
+                    var newName;
+                    if(flag != -1){
+                        newEmail = put_data.substr(0,put_data.indexOf('\n'));
+                        //console.log(tempName);
+                        if(usersList[i].updateEmail(email,newEmail)){
+                            res.statusCode = 200;
+                            res.write("Email changed. \n");
+                            res.end();
+                        }
+                        else{
+                            res.statusCode = 204;
+                            res.write("Email can not be found.Error no:204 \n");
+                            res.end();
+                        }
+                    }
+                    else{
+                        res.statusCode = 404
+                        res.write("User can not be found for user name :" + name + ". \n");
+                        res.end();  //ends the response
+                    }
+                case 6: //if user tries to change email
+                //console.log(req.body);
+                var name = parsed_input[datas.NAME];
+                var flag = isIn(name);
+                var newName;
+                if(flag != -1){
+                    newScore = put_data.substr(0,put_data.indexOf('\n'));
+                    //console.log(tempName);
+                    if(usersList[i].updateScore(newScore)){
+                        res.statusCode = 200;
+                        res.write("Score changed. \n");
+                        res.end();
+                    }
+                }
+                else{
+                    res.statusCode = 404
+                    res.write("User can not be found for user name :" + name + ". \n");
+                    res.end();  //ends the response
+                }    
+            }
+        });
     }	
+    else{
+        res.statusCode = 404
+        res.write("Invalid action. \n");
+        res.end();  //ends the response
+    }
 });
 
 server.listen(port, hostname, () => {
