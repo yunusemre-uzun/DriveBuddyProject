@@ -179,7 +179,7 @@ const server = http.createServer((req, res) => {
                     res.end();  //ends the response
                 }
                 break;
-            case 6:
+            case 5:
                 if(flag != -1) //if the user exists
                 {
                     res.statusCode = 200;
