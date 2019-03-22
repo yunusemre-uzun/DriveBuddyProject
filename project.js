@@ -64,7 +64,7 @@ const server = http.createServer((req, res) => {
                     break;//if client post to emails resources create a new instance of related name
                 case 3:
                     var name = parsed_input[datas.NAME];  //get the name from the url
-                    var newEmail;
+                    var tempEmail;
                     var flag = isIn(name);
                     var user = usersList[flag];
                     //console.log(i);
@@ -85,7 +85,7 @@ const server = http.createServer((req, res) => {
                             }
                         }
                         res.statusCode = 201;
-                        res.write("New email, " + newEmail + " , created for user :" + name + "\n" );
+                        res.write("New email, " + tempEmail + " , created for user :" + name + "\n" );
                         res.end();  //ends the response
     
                     }
@@ -100,6 +100,7 @@ const server = http.createServer((req, res) => {
                     var newScore;
                     var flag = isIn(name);
                     //console.log(i);
+                    var user = usersList[flag];
                     if(flag != -1) //if the user exists
                     {
                         if(post_data == ''){
@@ -109,7 +110,7 @@ const server = http.createServer((req, res) => {
                             newScore = post_data.substr(0,post_data.indexOf('\n'));
                             //console.log(tempEmail);
                         }
-                        user.changeScore(newScore);
+                        user.updateScore(newScore);
                         res.statusCode = 201;
                         res.write("New score, " + newScore + " , is for user :" + name + "\n" );
                         res.end();  //ends the response
@@ -120,6 +121,7 @@ const server = http.createServer((req, res) => {
                         res.write("Name does not exist in resources.Error no:404 \n");
                         res.end();  //ends the response
                     }
+                    break;
                 default:
                     res.write("Erroneous url for post action. \n");
                     res.end();  //ends the response
@@ -141,6 +143,7 @@ const server = http.createServer((req, res) => {
                 res.end(JSON.stringify({ 
                     names: userNames
                 }));
+                break;
             case 2:
                 if(flag != -1) //if the user exists
                 {
@@ -202,7 +205,7 @@ const server = http.createServer((req, res) => {
     else if(req.method == 'DELETE'){
         var name = parsed_input[datas.NAME];
         var flag = isIn(name);
-        if(flag =! -1){
+        if(flag != -1){
             switch(parsed_input.length){
                 case 2:
                     res.statusCode = 200;
@@ -219,6 +222,7 @@ const server = http.createServer((req, res) => {
                     usersList = newUserList;
                     res.write(name + " is deleted successfully. \n");
                     res.end();  //ends the response
+                    break;
                 case 4:
                     var email = parsed_input[datas.EMAIL];
                     if(usersList[flag].deleteEmail(email)){
@@ -231,6 +235,11 @@ const server = http.createServer((req, res) => {
                         res.write(email + " can not be found for user name :" + name + ". \n");
                         res.end();  //ends the response
                     }
+                    break;
+                default:
+                    res.write("Erroneous url for delete action. \n");
+                    res.end();  //ends the response
+                    break;
             }
         }
         else{
@@ -252,9 +261,11 @@ const server = http.createServer((req, res) => {
                     //console.log(req.body);
                     var name = parsed_input[datas.NAME];
                     var flag = isIn(name);
-                    var newName;
+                    var newName = put_data;
+                    //console.log(put_data);
+                    var user = usersList[flag];
                     if(flag != -1){
-                        newName = put_data.substr(0,put_data.indexOf('\n'));
+                        //newName = put_data.substr(0,put_data.indexOf('\n'));
                         //console.log(tempName);
                         for(i=0;i<usersList.length;i++){
                             if(usersList[i] == newName){
@@ -263,7 +274,7 @@ const server = http.createServer((req, res) => {
                                 res.end();  //ends the response
                             }
                         }
-                        usersList[i].changeUserName(newName);
+                        user.changeUserName(newName);
                         res.statusCode = 200;
                         res.write("Name changed. \n");
                         res.end();  //ends the response
@@ -273,14 +284,15 @@ const server = http.createServer((req, res) => {
                         res.write("User can not be found for user name :" + name + ". \n");
                         res.end();  //ends the response
                     }
+                    break;
                 case 4: //if user tries to change email
                     //console.log(req.body);
                     var name = parsed_input[datas.NAME];
                     var email = parsed_input[datas.NAME]
                     var flag = isIn(name);
-                    var newName;
+                    var newEmail = put_data;
                     if(flag != -1){
-                        newEmail = put_data.substr(0,put_data.indexOf('\n'));
+                        //newEmail = put_data.substr(0,put_data.indexOf('\n'));
                         //console.log(tempName);
                         if(usersList[i].updateEmail(email,newEmail)){
                             res.statusCode = 200;
@@ -298,6 +310,7 @@ const server = http.createServer((req, res) => {
                         res.write("User can not be found for user name :" + name + ". \n");
                         res.end();  //ends the response
                     }
+                    break;
                 case 6: //if user tries to change email
                 //console.log(req.body);
                 var name = parsed_input[datas.NAME];
@@ -316,7 +329,12 @@ const server = http.createServer((req, res) => {
                     res.statusCode = 404
                     res.write("User can not be found for user name :" + name + ". \n");
                     res.end();  //ends the response
-                }    
+                } 
+                break;   
+                default:
+                    res.write("Erroneous url for put action. \n");
+                    res.end();  //ends the response
+                    break;
             }
         });
     }	

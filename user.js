@@ -11,6 +11,7 @@ class User {
 
     changeUserName(newName){
         this.userName = newName;
+        console.log(this.userName);
         return 1;
     }
 
@@ -45,11 +46,11 @@ class User {
     addNewEmail(newEmail){
         var i ;
         for(i=0;i<this.userEmail.length;i++){
-            if(newEmail == userEmail[i]){
+            if(newEmail == this.userEmail[i]){
                 return -1;
             }
         }
-        userEmail.push(newEmail);
+        this.userEmail.push(newEmail);
         return this.userEmail.length;
     };
 
